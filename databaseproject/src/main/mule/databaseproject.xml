@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d53e2cfd-f02b-4be4-b7a1-b690d0eb62d0" basePath="/database" >
+		<http:listener-connection host="localhost" port="8081" />
+	</http:listener-config>
+	<db:config name="MySQL_Local" doc:name="Database Config" doc:id="db49185e-d68d-42b1-b958-d32b16b95e31" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="gr8password" database="MULEDB" />
+	</db:config>
+	<file:config name="File_connector" doc:name="File Config" doc:id="f5da819c-459b-472f-8ec2-00db69689bfd" >
+		<file:connection workingDir="/Users/yogeshpawar/Desktop/Mule" />
+	</file:config>
+	<flow name="databaseprojectFlow" doc:id="ca21eaf3-599c-4893-83c0-521dbfdccb8c" >
+		<http:listener doc:name="Listener" doc:id="a794b1c7-73f3-4e7b-a748-3ecb6088b868" config-ref="HTTP_Listener_config" path="/databaseproject"/>
+		<logger level="INFO" doc:name="Logger" doc:id="1f1e94b2-262d-4c92-bf7c-fad2b5950eba" message="Query Parameter  #[attributes.queryParams.accountId]"/>
+		<db:select doc:id="09168a67-6ce1-4726-8846-31c1252b4bd9" config-ref="MySQL_Local">
+			<db:sql ><![CDATA[select * from ACCOUNTS where Accountid =:accountId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{'accountId' : attributes.queryParams.accountId}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="75e4499f-1899-493b-839f-623c457fa828">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e0554ac1-5292-4978-8453-112063f107d3" message="Data from Database #[payload]"/>
+	</flow>
+</mule>
